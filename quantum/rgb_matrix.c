@@ -560,10 +560,12 @@ __attribute__((weak))
 void rgb_matrix_indicators_user(uint16_t led_i) {}
 
 void rgb_matrix_task(void) {
+#ifdef RGB_MATRIX_SKIP_FRAMES_IN_MS
     static uint32_t led_next_run = 0;
     const uint32_t timer = timer_read32();
     if (timer < led_next_run) { return; }
     led_next_run = timer + RGB_MATRIX_SKIP_FRAMES;
+#endif
 
     static uint16_t cur_led_i = 0;
     static uint8_t  effect = 0;
@@ -585,9 +587,17 @@ void rgb_matrix_task(void) {
 
     // A new frame is starting
     if (cur_led_i == 0) {
+
+#ifdef RGB_MATRIX_SKIP_FRAMES_IN_MS
         // flush the old frame
         rgb_matrix_driver.flush();
-
+#else
+        static uint8_t rgb_matrix_task_counter = 0;
+        if (rgb_matrix_task_counter == 0) {
+            rgb_matrix_driver.flush();
+        }
+        rgb_matrix_task_counter = ((rgb_matrix_task_counter + 1) % (RGB_MATRIX_SKIP_FRAMES + 1));
+#endif
         // Ideally we would also stop sending zeros to the LED driver PWM buffers
         // while suspended and just do a software shutdown. This is a cheap hack for now.
         suspend_backlight = (
