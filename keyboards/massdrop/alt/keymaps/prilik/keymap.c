@@ -10,10 +10,13 @@ enum alt_keycodes {
     DBG_MOU,               //DEBUG Toggle Mouse Prints
     MD_BOOT,               //Restart into bootloader after hold timeout
 
+    SET_BRI,
+
     UC_HELP, // URL for QMK unicode help
     UC_SHRG, // ¯\_(ツ)_/¯ (requires unicode support)
-    #define UC_BBB X(E_B)
+    #define UC_BBB X(E_BBB)
     #define UC_100 X(E_100)
+    #define UC_EYES X(E_EYES)
 };
 
 
@@ -24,12 +27,14 @@ enum alt_layers {
 };
 
 enum unicode_names {
-    E_B,   // dat B - '🅱️'
-    E_100, // 100   - '💯'
+    E_EYES, // eyes  - '👀'
+    E_BBB,  // dat B - '🅱️'
+    E_100,  // 100   - '💯'
 };
 const uint32_t PROGMEM unicode_map[] = {
-    [E_B]   = 0x1F171,
-    [E_100] = 0x1F4AF,
+    [E_EYES] = 0x1F440,
+    [E_BBB]  = 0x1F171,
+    [E_100]  = 0x1F4AF,
 };
 
 
@@ -51,11 +56,11 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         _______, RGB_SPD, RGB_VAI, RGB_SPI, RGB_HUI, RGB_SAI, _______, U_T_AUTO,U_T_AGCR,_______, KC_PSCR, KC_SLCK, KC_PAUS, _______, KC_END,  \
         _______, RGB_RMOD,RGB_VAD, RGB_MOD, RGB_HUD, RGB_SAD, _______, _______, _______, _______, _______, _______,          _______, KC_VOLU, \
         _______, RGB_TOG, _______, _______, _______, MD_BOOT, TG_NKRO, DBG_TOG, KC_MPRV, KC_MNXT, KC_MPLY, _______,          _______, KC_VOLD, \
-        _______, _______, _______,                            KC_MPLY,                            MO(2),   _______, _______, _______, _______  \
+        _______, _______, _______,                            SET_BRI,                            MO(2),   _______, _______, _______, _______  \
     ),
     [_MEMES] = LAYOUT(
         ___X___, UC_100,  ___X___, ___X___, ___X___, ___X___, ___X___, ___X___, ___X___, ___X___, ___X___, ___X___, ___X___, ___X___, ___X___, \
-        ___X___, ___X___, ___X___, ___X___, ___X___, ___X___, ___X___, ___X___, ___X___, ___X___, ___X___, ___X___, ___X___, ___X___, ___X___, \
+        ___X___, ___X___, ___X___, UC_EYES, ___X___, ___X___, ___X___, ___X___, ___X___, ___X___, ___X___, ___X___, ___X___, ___X___, ___X___, \
         ___X___, ___X___, UC_SHRG, ___X___, ___X___, ___X___, ___X___, ___X___, ___X___, ___X___, ___X___, ___X___,          ___X___, ___X___, \
         ___X___, ___X___, ___X___, ___X___, ___X___, UC_BBB,  ___X___, ___X___, ___X___, ___X___, UC_HELP, ___X___,          ___X___, ___X___, \
         UC_M_OS, UC_M_WC, UC_M_LN,                            ___X___,                            ___X___, ___X___, ___X___, ___X___, ___X___  \
@@ -71,13 +76,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     */
 };
 
-// Runs just one time when the keyboard initializes.
-void matrix_init_user(void) {
-};
-
-// Runs constantly in the background, in a loop.
-void matrix_scan_user(void) {
-};
+extern rgb_config_t rgb_matrix_config;
 
 #define MODS_SHIFT  (get_mods() & MOD_BIT(KC_LSHIFT) || get_mods() & MOD_BIT(KC_RSHIFT))
 #define MODS_CTRL  (get_mods() & MOD_BIT(KC_LCTL) || get_mods() & MOD_BIT(KC_RCTRL))
@@ -87,6 +86,15 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     static uint32_t key_timer;
 
     switch (keycode) {
+        case SET_BRI:
+            if (record->event.pressed) {
+                switch (rgb_matrix_config.hsv.v) {
+                case 0          : rgb_matrix_config.hsv.v = 255; break;
+                case 1   ... 127: rgb_matrix_config.hsv.v = 0;   break;
+                case 128 ... 255: rgb_matrix_config.hsv.v = 127; break;
+                }
+            }
+            return false;
         case UC_HELP:
             if (record->event.pressed) {
                 SEND_STRING("https://beta.docs.qmk.fm/features/feature_unicode#input-modes" SS_TAP(X_ENTER));

@@ -139,7 +139,8 @@ void shutdown_user (void) {
   #endif // RGBLIGHT_ENABLE
   #ifdef RGB_MATRIX_ENABLE
     uint16_t timer_start = timer_read();
-    rgb_matrix_set_color_all( 0xFF, 0x00, 0x00 );
+    for (uint16_t i = 0; i < DRIVER_LED_TOTAL; i++)
+      rgb_matrix_set_color( i, 0xFF, 0x00, 0x00 );
     while(timer_elapsed(timer_start) < 250) { wait_ms(1); }
   #endif //RGB_MATRIX_ENABLE
   shutdown_keymap();
